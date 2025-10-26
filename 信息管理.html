@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生信息管理系统</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #fafafa;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid #f0f0f0;
+        }
+
+        .header {
+            background: white;
+            padding: 30px 40px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 400;
+            color: #000;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+            font-weight: 300;
+        }
+
+        .main-content {
+            padding: 0;
+            display: flex;
+            min-height: 600px;
+        }
+
+        .input-section {
+            flex: 0 0 400px;
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #000;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: "•";
+            color: #000;
+            font-size: 24px;
+        }
+
+        .textarea-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            background: white;
+            transition: all 0.2s ease;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #000;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+        }
+
+        .textarea-placeholder {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            color: #999;
+            pointer-events: none;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        textarea:focus + .textarea-placeholder,
+        textarea:not(:placeholder-shown) + .textarea-placeholder {
+            display: none;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-direction: column;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #333;
+            border-color: #333;
+        }
+
+        .table-section {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #000;
+        }
+
+        .student-count {
+            background: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #fafafa;
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 500;
+            color: #000;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #fafafa;
+            font-size: 14px;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .action-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state div {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #000;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #000;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .input-section {
+                flex: none;
+                border-right: none;
+                border-bottom: 1px solid #f0f0f0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+                margin: -20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .input-section {
+                padding: 20px;
+            }
+            
+            .table-header {
+                padding: 20px;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>学生信息管理系统</h1>
+            <p>简洁高效的学生信息处理工具</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="section-title">数据输入</div>
+                <div class="textarea-container">
+                    <textarea id="studentInput" placeholder=" "></textarea>
+                    <div class="textarea-placeholder">
+                        请输入学生信息<br><br>
+
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button class="btn btn-primary" onclick="parseAndAdd()">
+                        📥 解析并添加
+                    </button>
+                    <button class="btn" onclick="clearInput()">
+                        🗑️ 清空输入
+                    </button>
+                    <button class="btn" onclick="exportToExcel()">
+                        📊 导出Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="table-header">
+                    <h2>学生信息列表</h2>
+                    <span class="student-count" id="studentCount">0 名学生</span>
+                </div>
+                <div class="table-container">
+                    <table id="studentTable">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>姓名</th>
+                                <th>联系方式</th>
+                                <th>年级</th>
+                                <th>来源</th>
+                                <th>备注</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <div>📝</div>
+                                    <p>暂无学生信息，请在上方输入数据</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 style="margin-bottom: 20px; font-weight: 500;">编辑学生信息</h3>
+            <form id="editForm">
+                <div class="form-group">
+                    <label>姓名:</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label>联系方式:</label>
+                    <input type="text" id="editContact" required>
+                </div>
+                <div class="form-group">
+                    <label>年级:</label>
+                    <input type="text" id="editGrade">
+                </div>
+                <div class="form-group">
+                    <label>来源:</label>
+                    <input type="text" id="editSource">
+                </div>
+                <div class="form-group">
+                    <label>备注:</label>
+                    <input type="text" id="editNote">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="saveEdit()" style="width: 100%; margin-top: 10px;">
+                    💾 保存修改
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let editingIndex = -1;
+
+        // 解析学生信息函数
+        function parseStudentInfo(text) {
+            const patterns = {
+                '姓名': /(?:学生姓名|姓名)[：:\s]*([^\n\r]+)/i,
+                '联系方式': /(?:联系方式|手机号|电话)[：:\s]*(\d{11})/i,
+                '年级': /年级[：:\s]*([^\n\r]+)/i,
+                '来源': /(?:来源渠道|来源|渠道|区域)[：:\s]*([^\n\r]+)/i,
+                '备注': /备注(?:（咨询内容）)?[：:\s]*([\s\S]*?)(?=\n*(?:客服|沟通日期|$))/i,
+                '客服': /客服[：:\s]*([^\n\r]+)/i,
+                '沟通日期': /沟通日期[：:\s]*([^\n\r]+)/i
+            };
+
+            const student = {};
+            for (const [field, pattern] of Object.entries(patterns)) {
+                const match = text.match(pattern);
+                student[field] = match ? match[1].trim() : '';
+                
+                if (field === '来源') {
+                    student[field] = student[field].replace(/➕/g, '+').replace(/＋/g, '+');
+                }
+            }
+            return student;
+        }
+
+        // 解析并添加学生信息
+        function parseAndAdd() {
+            const inputText = document.getElementById('studentInput').value.trim();
+            if (!inputText) {
+                alert('请输入学生信息！');
+                return;
+            }
+
+            try {
+                const blocks = inputText.split(/\n\s*\n/);
+                let addedCount = 0;
+
+                blocks.forEach(block => {
+                    if (block.trim()) {
+                        const student = parseStudentInfo(block);
+                        if (student.姓名 && student.联系方式) {
+                            students.push(student);
+                            addedCount++;
+                        }
+                    }
+                });
+
+                if (addedCount > 0) {
+                    updateTable();
+                    alert(`成功添加 ${addedCount} 名学生信息！`);
+                    document.getElementById('studentInput').value = '';
+                } else {
+                    alert('未找到有效的学生信息，请检查格式是否正确。');
+                }
+            } catch (error) {
+                alert('解析失败：' + error.message);
+            }
+        }
+
+        // 更新表格显示
+        function updateTable() {
+            const tbody = document.getElementById('studentTableBody');
+            const countElement = document.getElementById('studentCount');
+            
+            if (students.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <div>📝</div>
+                            <p>暂无学生信息，请在上方输入数据</p>
+                        </td>
+                    </tr>
+                `;
+                countElement.textContent = '0 名学生';
+                return;
+            }
+
+            tbody.innerHTML = students.map((student, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${student.姓名 || '-'}</strong></td>
+                    <td>${student.联系方式 || '-'}</td>
+                    <td>${student.年级 || '-'}</td>
+                    <td>${student.来源 || '-'}</td>
+                    <td title="${student.备注 || ''}">${student.备注 ? (student.备注.length > 30 ? student.备注.substring(0, 30) + '...' : student.备注) : '-'}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="action-btn" onclick="openEditModal(${index})">编辑</button>
+                            <button class="action-btn" onclick="deleteStudent(${index})" style="color: #e74c3c;">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            countElement.textContent = `${students.length} 名学生`;
+        }
+
+        // 清空输入
+        function clearInput() {
+            document.getElementById('studentInput').value = '';
+        }
+
+        // 导出到Excel
+        function exportToExcel() {
+            if (students.length === 0) {
+                alert('没有可导出的学生信息！');
+                return;
+            }
+
+            try {
+                const data = students.map((student, index) => ({
+                    '序号': index + 1,
+                    '姓名': student.姓名 || '',
+                    '联系方式': student.联系方式 || '',
+                    '年级': student.年级 || '',
+                    '来源': student.来源 || '',
+                    '备注': student.备注 || '',
+                    '客服': student.客服 || '',
+                    '沟通日期': student.沟通日期 || ''
+                }));
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(data);
+                
+                const colWidths = [
+                    { wch: 8 }, { wch: 10 }, { wch: 15 }, 
+                    { wch: 10 }, { wch: 20 }, { wch: 30 }, 
+                    { wch: 10 }, { wch: 12 }
+                ];
+                ws['!cols'] = colWidths;
+
+                XLSX.utils.book_append_sheet(wb, ws, '学生信息');
+
+                const date = new Date();
+                const filename = `学生信息_${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}.xlsx`;
+
+                XLSX.writeFile(wb, filename);
+                alert(`Excel文件已生成：${filename}`);
+            } catch (error) {
+                alert('导出失败：' + error.message);
+            }
+        }
+
+        // 打开编辑模态框
+        function openEditModal(index) {
+            editingIndex = index;
+            const student = students[index];
+            
+            document.getElementById('editName').value = student.姓名 || '';
+            document.getElementById('editContact').value = student.联系方式 || '';
+            document.getElementById('editGrade').value = student.年级 || '';
+            document.getElementById('editSource').value = student.来源 || '';
+            document.getElementById('editNote').value = student.备注 || '';
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+            editingIndex = -1;
+        }
+
+        // 保存编辑
+        function saveEdit() {
+            if (editingIndex === -1) return;
+
+            students[editingIndex] = {
+                '姓名': document.getElementById('editName').value,
+                '联系方式': document.getElementById('editContact').value,
+                '年级': document.getElementById('editGrade').value,
+                '来源': document.getElementById('editSource').value,
+                '备注': document.getElementById('editNote').value,
+                '客服': students[editingIndex].客服 || '',
+                '沟通日期': students[editingIndex].沟通日期 || ''
+            };
+
+            updateTable();
+            closeModal();
+            alert('学生信息已更新！');
+        }
+
+        // 删除学生
+        function deleteStudent(index) {
+            if (confirm('确定要删除这名学生的信息吗？')) {
+                students.splice(index, 1);
+                updateTable();
+            }
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTable();
+        });
+    </script>
+</body>
+</html>
